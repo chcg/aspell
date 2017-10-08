@@ -91,14 +91,14 @@ jobs:
     - run: CXX=clang++-5.0 CC=clang-5.0 ./sanity-check.sh
     - run: CXX=clang++-6.0 CC=clang-6.0 ./sanity-check.sh
 
-  build_19_04:
+  build_20_04:
     working_directory: ~/GNUAspell/aspell
     parallelism: 1
     #shell: /bin/bash --login
     # To see the list of pre-built images that CircleCI provides for most common languages see
     # https://circleci.com/docs/2.0/circleci-images/
     docker:
-    - image: circleci/buildpack-deps:19.04
+    - image: circleci/buildpack-deps:20.04
     steps:
     # Machine Setup
     #   If you break your build into multiple jobs with workflows, you will probably want to do the parts
@@ -110,25 +110,53 @@ jobs:
     # note: default gcc version is 8.3
     - run: sudo apt-get -y update
     - run: sudo apt-get -y install make autopoint texinfo libtool intltool bzip2 gettext g++-multilib
-         g++-6 g++-7 g++-9 clang-6.0 clang-7 clang-8
+         g++-7 g++-9 g++-10 clang-6.0 clang-7 clang-8 clang-9
     - run: sudo apt-get -y purge aspell
     #
     - run: ./autogen
     - run: ./sanity-check.sh
     - run: CXX="g++ -m32" CC="gcc -m32" ./sanity-check.sh
-    - run: CXX=g++-6 CC=gcc-6 ./sanity-check.sh
     - run: CXX=g++-7 CC=gcc-7 ./sanity-check.sh
     - run: CXX=g++-9 CC=gcc-9 ./sanity-check.sh
+    #- run: CXX=g++-10 CC=gcc-10 ./sanity-check.sh
     - run: CXX=clang++-6.0 CC=clang-6.0 ./sanity-check.sh
     - run: CXX=clang++-7 CC=clang-7 ./sanity-check.sh
     - run: CXX=clang++-8 CC=clang-8 ./sanity-check.sh
+    - run: CXX=clang++-9 CC=clang-9 ./sanity-check.sh
     - run: ./config-opt && make -C build -j2
+
+  build_20_04_mingw64:
+    working_directory: ~/GNUAspell/aspell
+    parallelism: 1
+    #shell: /bin/bash --login
+    # To see the list of pre-built images that CircleCI provides for most common languages see
+    # https://circleci.com/docs/2.0/circleci-images/
+    docker:
+    - image: circleci/buildpack-deps:20.04
+    steps:
+    # Machine Setup
+    #   If you break your build into multiple jobs with workflows, you will probably want to do the parts
+    #   of this that are relevant in each
+    # The following `checkout` command checks out your code to your working directory. In 1.0 we did this implicitly.
+    # In 2.0 you can choose where in the course of a job your code should be checked out.
+    - checkout
+    #
+    # note: default gcc version is 8.3
+    - run: sudo apt-get -y update
+    - run: sudo apt-get -y install make autopoint texinfo libtool intltool bzip2 gettext g++-multilib mingw-w64
+    - run: sudo apt-get -y purge aspell
+    #
+    - run: ./autogen
+    - run: ./configure --host=x86_64-w64-mingw32 && make
+    - run: make dist clean
+    - run: ./configure --host=i686-w64-mingw32 && make
+    - run: make dist clean
 
   tests:
     working_directory: ~/GNUAspell/aspell
     parallelism: 1
     docker:
-    - image: circleci/buildpack-deps:19.04
+    - image: circleci/buildpack-deps:20.04
     steps:
     # Machine Setup
     - checkout
@@ -146,10 +174,12 @@ workflows:
   version: 2
   sanity_check:
     jobs:
-      - build_jessie
-      - build_16_04
-      - build_18_04
-      - build_19_04
+      #- build_jessie
+      #- build_16_04
+      #- build_18_04
+      - build_20_04
+      - build_20_04_mingw64
+
   tests:
     jobs:
       - tests
